@@ -41,33 +41,44 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-<div class="max-w-4xl mx-auto px-4 py-8">
+<body class="bg-primary/5 min-h-screen">
+<div class="max-w-4xl mx-auto px-4 pt-8">
     <!-- 页面标题 -->
     <header class="text-center mb-8">
         <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-dark mb-2">
             <i class="fa-solid fa-code text-primary mr-2"></i>LeetCode Top100 刷题器
         </h1>
-        <p class="text-gray-600">按批次随机刷题，完成 100 道解锁下一批</p>
+        <p class="text-gray-600">按轮次随机出题，刷完解锁下一轮</p>
     </header>
 
     <!-- 进度信息 -->
     <div class="bg-white rounded-xl p-6 card-shadow mb-6">
         <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
-            <div class="text-lg font-semibold">
-                当前批次：<span id="currentBatch" class="text-primary text-xl"></span>
+            <div class="flex items-center gap-6">
+                <div class="text-lg font-semibold">
+                    当前轮次：<span id="currentBatch" class="text-primary text-xl"></span>
+                </div>
+                <div class="text-lg font-semibold">
+                    刷题进度：<span id="progressText" class="text-primary text-xl"></span>
+                </div>
             </div>
-            <div class="text-lg font-semibold">
-                刷题进度：<span id="progressText" class="text-success text-xl"></span>
+            <div class="flex items-center gap-2">
+                <button id="shuffleBtn" title="重新随机排列题目顺序"
+                        class="text-primary border border-primary bg-primary/5 hover:bg-primary/10 px-4 py-2 rounded-lg transition-colors text-sm font-medium">
+                    <i class="fa-solid fa-shuffle mr-1.5"></i>刷新题序
+                </button>
+                <button id="resetBtn"
+                        class="text-gray-500 border border-gray-300 hover:text-danger hover:border-danger hover:bg-danger/5 px-4 py-2 rounded-lg transition-colors text-sm font-medium">
+                    <i class="fa-solid fa-arrows-rotate mr-1.5"></i>重置数据
+                </button>
             </div>
-            <button id="resetBtn"
-                    class="bg-danger text-white px-4 py-2 rounded-lg hover:bg-danger/90 transition-colors">
-                <i class="fa-solid fa-arrows-rotate mr-1"></i>重置刷题数据
-            </button>
         </div>
         <!-- 进度条 -->
-        <div class="w-full bg-gray-200 rounded-full h-3">
-            <div id="progressBar" class="bg-success h-3 rounded-full transition-all duration-300"></div>
+        <div class="flex items-center gap-3">
+            <div class="flex-1 bg-gray-200 rounded-full h-3">
+                <div id="progressBar" class="bg-primary h-3 rounded-full transition-all duration-300"></div>
+            </div>
+            <span id="progressPercent" class="text-sm font-medium text-primary whitespace-nowrap"></span>
         </div>
     </div>
 
@@ -83,16 +94,34 @@
         </a>
         <div class="flex gap-4">
             <button id="completeBtn"
-                    class="flex-1 bg-success text-white px-6 py-3 rounded-lg hover:bg-success/90 transition-colors text-lg font-medium">
-                <i class="fa-solid fa-check mr-2"></i>标记为已完成
+                    class="flex-1 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors text-lg font-medium">
+                <i class="fa-solid fa-check mr-2"></i>标记完成
             </button>
         </div>
+    </div>
+
+    <!-- 题目完成总览 -->
+    <div class="bg-white rounded-xl p-6 card-shadow mb-8">
+        <h3 class="text-lg font-bold mb-4 flex items-center justify-between">
+            <span class="flex items-center">
+                <i class="fa-solid fa-table-cells-large text-primary mr-2"></i>刷题总览
+            </span>
+            <span class="flex items-center gap-4 text-xs text-gray-500 font-normal">
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded bg-primary"></span>已完成
+                </span>
+                <span class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded bg-gray-200"></span>待刷题
+                </span>
+            </span>
+        </h3>
+        <div id="problemGrid" class="grid grid-cols-10 gap-1"></div>
     </div>
 
     <!-- 已完成题目列表 -->
     <div class="bg-white rounded-xl p-6 card-shadow">
         <h3 class="text-lg font-bold mb-4 flex items-center">
-            <i class="fa-solid fa-list-check text-success mr-2"></i>最近已完成
+            <i class="fa-solid fa-list-check text-primary mr-2"></i>最近完成
         </h3>
         <div id="completedList" class="max-h-96 overflow-y-auto space-y-2">
             <p class="text-gray-500 text-center py-4">暂无完成题目</p>
@@ -103,6 +132,9 @@
     <footer class="mt-auto py-6">
         <div class="container mx-auto px-4 text-center text-sm text-gray-500 dark:text-gray-400">
             <p>© 2026 Spring-_-Bear</p>
+            <p class="mt-2 text-xs text-gray-400">
+                <i class="fa-solid fa-shield-halved mr-1"></i>刷题进度和完成信息仅存储在您的浏览器本地，不上传服务器，数据不会外泄，请您放心使用
+            </p>
         </div>
     </footer>
 </div>
@@ -116,7 +148,7 @@
         // 存储键名
         KEYS: {
             CURRENT_BATCH: 'lc_current_batch',
-            BATCH_QUESTIONS: 'lc_batch_questions', // 当前批次的题目ID列表（随机乱序）
+            BATCH_QUESTIONS: 'lc_batch_questions', // 当前轮次的题目ID列表（随机乱序）
             FINISHED_RECORDS: 'lc_finished_records' // 完成记录 { [题ID]: { completed: boolean, time: 时间戳 } }
         },
 
@@ -158,7 +190,31 @@
         return arr;
     }
 
-    // 获取当前批次的题目列表（没有则生成随机乱序的100道）
+    // 数字转中文（1 → 一，11 → 十一，21 → 二十一）
+    function numberToChinese(num) {
+        const digits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+        if (num >= 1 && num <= 9) {
+            return digits[num];
+        }
+        if (num === 10) {
+            return '十';
+        }
+        if (num < 20) {
+            return '十' + digits[num % 10];
+        }
+        const tens = Math.floor(num / 10);
+        const ones = num % 10;
+        return digits[tens] + '十' + (ones ? digits[ones] : '');
+    }
+
+    // 时间戳格式化为 YYYY-MM-DD HH:mm:ss
+    function formatDateTime(timestamp) {
+        const date = new Date(timestamp);
+        const pad = n => String(n).padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    }
+
+    // 获取当前轮次的题目列表（没有则生成随机乱序的100道）
     function getCurrentBatchQuestions() {
         let batchQuestions = Storage.get(Storage.KEYS.BATCH_QUESTIONS);
         if (!batchQuestions) {
@@ -175,7 +231,7 @@
         const batchQuestions = getCurrentBatchQuestions();
         const finishedRecords = Storage.get(Storage.KEYS.FINISHED_RECORDS) || {};
 
-        // 遍历批次题目，找到第一个未完成的
+        // 遍历轮次题目，找到第一个未完成的
         for (const id of batchQuestions) {
             if (!finishedRecords[id]?.completed) {
                 return LEETCODE_TOP100.find(item => item.id === id);
@@ -184,10 +240,10 @@
         return null; // 全部完成
     }
 
-    // 进入下一批次
+    // 进入下一轮次
     function nextBatch() {
         const currentBatch = Storage.get(Storage.KEYS.CURRENT_BATCH);
-        // 更新批次号
+        // 更新轮次号
         Storage.set(Storage.KEYS.CURRENT_BATCH, currentBatch + 1);
         // 重新生成随机题目列表
         const allProblemIds = LEETCODE_TOP100.map(item => item.id);
@@ -195,8 +251,17 @@
         Storage.set(Storage.KEYS.BATCH_QUESTIONS, newBatchQuestions);
         // 清空完成记录
         Storage.set(Storage.KEYS.FINISHED_RECORDS, {});
-        alert('🎉 恭喜！当前批次100道题全部完成，已解锁下一批次！');
+        alert('🎉 恭喜！当前轮次100道题全部完成，已解锁下一轮次！');
         window.location.reload();
+    }
+
+    // 刷新题目列表：重新随机打乱题目顺序
+    function shuffleBatchQuestions() {
+        const allProblemIds = LEETCODE_TOP100.map(item => item.id);
+        Storage.set(Storage.KEYS.BATCH_QUESTIONS, shuffleArray(allProblemIds));
+        renderProgress();
+        renderCurrentProblem();
+        renderCompletedList();
     }
 
     // 标记题目为已完成
@@ -222,9 +287,31 @@
         const progress = (finishedCount / totalCount) * 100;
 
         // 更新DOM
-        document.getElementById('currentBatch').textContent = currentBatch;
+        document.getElementById('currentBatch').textContent = numberToChinese(currentBatch);
         document.getElementById('progressText').textContent = `${finishedCount}/${totalCount}`;
         document.getElementById('progressBar').style.width = `${progress}%`;
+        document.getElementById('progressPercent').textContent = `${Math.round(progress)}%`;
+        renderProblemGrid();
+    }
+
+    // 渲染题目完成总览（10×10 方块表格）
+    function renderProblemGrid() {
+        const gridEl = document.getElementById('problemGrid');
+        const finishedRecords = Storage.get(Storage.KEYS.FINISHED_RECORDS) || {};
+
+        // 按题号升序排列，形成稳定的 10×10 总览
+        const sortedProblems = [...LEETCODE_TOP100].sort((a, b) => a.id - b.id);
+
+        gridEl.innerHTML = sortedProblems.map(item => {
+            const completed = finishedRecords[item.id]?.completed;
+            return `
+        <div title="${item.id}. ${item.title}（${completed ? '已完成' : '待刷题'}）"
+             class="aspect-square rounded-md flex items-center justify-center text-[11px] sm:text-xs font-medium transition-colors ${
+                 completed
+                     ? 'bg-primary/15 text-primary border border-primary/40'
+                     : 'bg-gray-100 text-gray-400 border border-gray-200'
+             }">${item.id}</div>`;
+        }).join('');
     }
 
     // 渲染当前题目
@@ -234,18 +321,18 @@
         const problemCard = document.getElementById('problemCard');
 
         if (!problem) {
-            // 批次完成，隐藏题目，显示提示
+            // 轮次完成，隐藏题目，显示提示
             problemCard.innerHTML = `
           <div class="text-center py-8">
-            <i class="fa-solid fa-trophy text-warning text-5xl mb-4"></i>
-            <h2 class="text-2xl font-bold text-dark mb-2">恭喜！本批次 100 道题全部完成！</h2>
-            <p class="text-gray-600 mb-6">点击下方按钮进入下一批次</p>
+            <i class="fa-solid fa-trophy text-primary text-5xl mb-4"></i>
+            <h2 class="text-2xl font-bold text-dark mb-2">恭喜！本轮次 100 道题全部完成！</h2>
+            <p class="text-gray-600 mb-6">点击下方按钮进入下一轮次</p>
             <button id="nextBatchBtn" class="bg-primary text-white px-8 py-3 rounded-lg hover:bg-primary/90 transition-colors">
-              进入下一批次
+              进入下一轮次
             </button>
           </div>
         `;
-            // 绑定下一批次按钮事件
+            // 绑定下一轮次按钮事件
             document.getElementById('nextBatchBtn').addEventListener('click', nextBatch);
             return;
         }
@@ -260,18 +347,22 @@
         difficultyEl.textContent = problem.difficulty;
         switch (problem.difficulty) {
             case '简单':
-                difficultyEl.className = 'px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
+                difficultyEl.className = 'px-3 py-1 rounded-full text-sm font-medium bg-green-50 text-green-700';
                 break;
             case '中等':
-                difficultyEl.className = 'px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800';
+                difficultyEl.className = 'px-3 py-1 rounded-full text-sm font-medium bg-yellow-50 text-yellow-700';
                 break;
             case '困难':
-                difficultyEl.className = 'px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800';
+                difficultyEl.className = 'px-3 py-1 rounded-full text-sm font-medium bg-red-50 text-red-700';
                 break;
         }
 
         // 绑定完成按钮事件
         completeBtn.onclick = () => {
+            // 弹框确认，避免误标记
+            if (!confirm(`⚠️ 确认将「${problem.title}」标记为已完成吗？`)) {
+                return;
+            }
             completeProblem(problem.id);
             renderProgress();
             renderCurrentProblem();
@@ -305,11 +396,11 @@
           <div>
             <span class="font-medium">${item.id}. ${item.title}</span>
             <span class="ml-2 text-xs px-2 py-0.5 rounded ${
-            item.difficulty === '简单' ? 'bg-green-100 text-green-800' :
-                item.difficulty === '中等' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+            item.difficulty === '简单' ? 'bg-green-50 text-green-700' :
+                item.difficulty === '中等' ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-700'
         }">${item.difficulty}</span>
           </div>
-          <span class="text-xs text-gray-500">${new Date(item.time).toLocaleString()}</span>
+          <span class="text-xs text-gray-500">${formatDateTime(item.time)}</span>
         </div>
       `).join('');
     }
@@ -322,6 +413,12 @@
         renderProgress();
         renderCurrentProblem();
         renderCompletedList();
+        // 绑定刷新题目顺序按钮事件
+        document.getElementById('shuffleBtn').addEventListener('click', () => {
+            if (confirm('⚠️ 确定要刷新题目顺序吗？题目列表将重新随机排列！')) {
+                shuffleBatchQuestions();
+            }
+        });
         // 绑定重置按钮事件
         document.getElementById('resetBtn').addEventListener('click', () => {
             if (confirm('⚠️ 确定要重置所有刷题数据吗？此操作不可恢复！')) {

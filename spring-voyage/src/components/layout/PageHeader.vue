@@ -11,7 +11,7 @@
         class="flex items-center gap-3 transition-opacity hover:opacity-90"
       >
         <div class="flex h-10 w-10 items-center justify-center rounded-xl">
-          <img src="/springbear.png" alt="avatar" />
+          <img src="https://cdn.springbear.cn/2026/08/d790dfe3aeaa6220f161063f755ba80a.png" alt="avatar" />
         </div>
       </a>
 

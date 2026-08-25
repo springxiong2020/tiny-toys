@@ -9,7 +9,9 @@ export const getMineBooksList = async (page, pageSize) => {
 };
 
 export const getMineProjectsList = async (page, pageSize) => {
-  return request.get("/mine/projects", { params: { page, pageSize } });
+  return request.get("/mine/projects", {
+    params: { page, pageSize, isVisible: 1 },
+  });
 };
 
 export const getMineSentencesList = async (page, pageSize) => {

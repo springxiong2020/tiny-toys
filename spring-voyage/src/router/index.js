@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory } from "vue-router";
+import Home from "@/views/home/index.vue";
 
 const menus = [
   {
@@ -52,7 +53,7 @@ const routes = [
   {
     path: "/",
     name: "Home",
-    component: () => import("@/views/home/index.vue"),
+    component: Home,
   },
   ...menus,
   {

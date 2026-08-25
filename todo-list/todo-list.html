@@ -336,6 +336,9 @@
 <footer class="py-4 border-t border-gray-200 dark:border-gray-700">
     <div class="container mx-auto px-4 text-center text-sm text-gray-500 dark:text-gray-400">
         <p>&copy; 2026 Spring-_-Bear</p>
+        <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">
+            <i class="fa-solid fa-shield-halved mr-1"></i>待办数据和主题偏好仅存储在您的浏览器本地，不上传服务器，数据不会外泄，请您放心使用
+        </p>
     </div>
 </footer>
 
@@ -354,7 +357,7 @@
     // 2. STORAGE
     // ====================================================================
     const Storage = {
-        KEYS: {TODO_DATA: 'todo_data', DARK_MODE: 'todoDarkMode'},
+        KEYS: {TODO_DATA: 'todo_data', DARK_MODE: 'todo_dark_mode'},
 
         get(key) {
             try {
@@ -603,8 +606,12 @@
                     }
                     case 'createdAt':
                         return new Date(b.createdAt) - new Date(a.createdAt);
-                    default:
-                        return a.order - b.order;
+                    default: {
+                        const pOrder = {high: 0, medium: 1, low: 2};
+                        const pa = pOrder[a.priority] ?? 1;
+                        const pb = pOrder[b.priority] ?? 1;
+                        return pa !== pb ? pa - pb : a.order - b.order;
+                    }
                 }
             }
             return new Date(b.completedAt) - new Date(a.completedAt);
@@ -1063,8 +1070,21 @@
         const targetIdx = incomplete.findIndex(t => t.id === targetId);
         if (sourceIdx === -1 || targetIdx === -1) return;
 
+        // Capture target before mutation for priority inheritance
+        const targetTask = incomplete[targetIdx];
+
         const [moved] = incomplete.splice(sourceIdx, 1);
-        incomplete.splice(targetIdx, 0, moved);
+        const actualTargetIdx = sourceIdx < targetIdx ? targetIdx - 1 : targetIdx;
+        incomplete.splice(actualTargetIdx, 0, moved);
+
+        // When using priority-based sort, inherit the target's priority
+        if (filters.sortBy === 'order' || filters.sortBy === 'priority') {
+            const sourceTask = appData.tasks.find(t => t.id === sourceId);
+            if (sourceTask && targetTask) {
+                sourceTask.priority = targetTask.priority;
+            }
+        }
+
         incomplete.forEach((task, idx) => {
             const orig = appData.tasks.find(t => t.id === task.id);
             if (orig) orig.order = idx;

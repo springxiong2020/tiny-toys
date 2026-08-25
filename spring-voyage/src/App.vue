@@ -47,13 +47,6 @@ onMounted(() => {
 });
 
 onUnmounted(endLoading);
-
-onMounted(() => {
-  isLoading.value = true;
-  setTimeout(() => {
-    isLoading.value = false;
-  }, 800);
-});
 </script>
 
 <style>

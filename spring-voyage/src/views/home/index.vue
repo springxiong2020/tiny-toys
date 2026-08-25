@@ -133,7 +133,7 @@
                   <div
                     class="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white"
                   >
-                    Portfolio
+                    我的作品
                   </div>
                 </div>
 
@@ -171,7 +171,7 @@
                   <div
                     class="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white"
                   >
-                    CSDN
+                    技术博客
                   </div>
                 </div>
 
@@ -209,7 +209,7 @@
                   <div
                     class="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white"
                   >
-                    GitHub
+                    开源项目
                   </div>
                 </div>
 
