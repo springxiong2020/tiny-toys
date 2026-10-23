@@ -59,6 +59,9 @@
                     当前轮次：<span id="currentBatch" class="text-primary text-xl"></span>
                 </div>
                 <div class="text-lg font-semibold">
+                    本轮用时：<span id="elapsedDays" class="text-primary text-xl"></span>
+                </div>
+                <div class="text-lg font-semibold">
                     刷题进度：<span id="progressText" class="text-primary text-xl"></span>
                 </div>
             </div>
@@ -149,7 +152,8 @@
         KEYS: {
             CURRENT_BATCH: 'lc_current_batch',
             BATCH_QUESTIONS: 'lc_batch_questions', // 当前轮次的题目ID列表（随机乱序）
-            FINISHED_RECORDS: 'lc_finished_records' // 完成记录 { [题ID]: { completed: boolean, time: 时间戳 } }
+            FINISHED_RECORDS: 'lc_finished_records', // 完成记录 { [题ID]: { completed: boolean, time: 时间戳 } }
+            USED_DAYS_OFFSET: "lc_used_days_offset"
         },
 
         // 获取存储数据
@@ -274,6 +278,25 @@
         Storage.set(Storage.KEYS.FINISHED_RECORDS, finishedRecords);
     }
 
+    // 计算本轮用时：当前日期 - 最近完成记录中最久的完成日期（按自然日）+ 今天
+    function getElapsedDays() {
+        const finishedRecords = Storage.get(Storage.KEYS.FINISHED_RECORDS) || {};
+        const times = Object.values(finishedRecords)
+            .filter(item => item.completed && item.time)
+            .map(item => item.time);
+        if (times.length === 0) {
+            return null;
+        }
+
+        const DAY_MS = 24 * 60 * 60 * 1000;
+        // 归一化到当天零点，按自然日计算
+        const startDay = new Date(Math.min(...times)).setHours(0, 0, 0, 0);
+        const today = new Date().setHours(0, 0, 0, 0);
+        const usedDaysOffset = Storage.get(Storage.KEYS.USED_DAYS_OFFSET) || "0"
+        // result = dayDiff + today + daysOffset
+        return Math.round((today - startDay) / DAY_MS) + 1 + parseInt(usedDaysOffset)
+    }
+
     // ===================== 4. 页面渲染函数 =====================
     // 渲染进度信息
     function renderProgress() {
@@ -288,6 +311,8 @@
 
         // 更新DOM
         document.getElementById('currentBatch').textContent = numberToChinese(currentBatch);
+        const elapsedDays = getElapsedDays();
+        document.getElementById('elapsedDays').textContent = elapsedDays === null ? '—' : `${elapsedDays} 天`;
         document.getElementById('progressText').textContent = `${finishedCount}/${totalCount}`;
         document.getElementById('progressBar').style.width = `${progress}%`;
         document.getElementById('progressPercent').textContent = `${Math.round(progress)}%`;

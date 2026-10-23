@@ -183,7 +183,7 @@
             </a>
 
             <a
-              href="https://github.com/springbear2020"
+              href="https://github.com/springxiong2020"
               target="_blank"
               class="group relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white/70 px-5 py-4 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-2xl dark:border-white/10 dark:bg-white/5 dark:hover:border-cyan-400/40 dark:hover:bg-cyan-500/10"
             >
@@ -263,7 +263,7 @@
                     >
                   </div>
                   <div class="pl-6 text-slate-500 dark:text-slate-400">
-                    Spring-_-Bear · Full Stack Developer
+                    Spring-_-Xiong · Full Stack Developer
                   </div>
                 </div>
 

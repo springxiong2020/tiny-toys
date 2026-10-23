@@ -61,7 +61,7 @@
 
           /* 新增：主题图标过渡 */
           .theme-icon {
-              @apply transition-all duration-300 ease-in-out;
+              @apply h-5 w-5 transition-all duration-300 ease-in-out;
           }
       }
   </style>
@@ -86,10 +86,14 @@
         <span class="hidden sm:inline text-sm">搜索</span>
         <kbd class="hidden md:inline px-2 py-0.5 text-xs bg-gray-200 dark:bg-gray-700 rounded">Ctrl+K</kbd>
       </button>
+      <button id="allFilterToggle"
+              class="hidden h-9 w-9 shrink-0 items-center justify-center p-0 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+        <i class="fa-solid fa-globe theme-icon text-gray-500"></i>
+      </button>
       <button id="themeToggle"
-              class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+              class="inline-flex h-9 w-9 shrink-0 items-center justify-center p-0 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
         <i class="fa-solid fa-moon theme-icon dark:hidden text-gray-500"></i>
-        <i class="fa-solid fa-sun theme-icon hidden dark:inline text-yellow-400"></i>
+        <i class="fa-solid fa-sun theme-icon hidden dark:block text-yellow-400"></i>
       </button>
     </div>
   </div>
@@ -169,6 +173,7 @@
   // 全局数据存储
   let siteData = { categories: [], sites: [] }
   let currentCategory = 'all'
+  let allSiteFilter = localStorage.getItem('site_all_filter') === 'visited' ? 'visited' : 'all'
 
   // DOM元素获取
   const elements = {
@@ -181,7 +186,8 @@
     searchResults: document.getElementById('searchResults'),
     searchBtn: document.getElementById('searchBtn'),
     closeSearch: document.getElementById('closeSearch'),
-    themeToggle: document.getElementById('themeToggle')
+    themeToggle: document.getElementById('themeToggle'),
+    allFilterToggle: document.getElementById('allFilterToggle')
   };
 
   // 初始化主题
@@ -281,16 +287,21 @@
   // 修改：渲染分类标签
   function renderCategories() {
     const tabContainer = elements.categoryTabs.querySelector('div')
+    const visitCounts = getVisitCounts()
     // 全部标签
-    const allCount = siteData.sites.length
+    const allCount = allSiteFilter === 'visited'
+      ? siteData.sites.filter(site => (visitCounts[site.id] || 0) > 0).length
+      : siteData.sites.length
 
     // 动态判断“全部”标签是否高亮
     const isAllActive = currentCategory === 'all' ? 'tab-active' : ''
     const allBadgeStyle = currentCategory === 'all' ? 'bg-primary/10 text-primary' : 'bg-gray-200 dark:bg-gray-700 text-inherit'
+    const allTabLabel = allSiteFilter === 'visited' ? '访问过的' : '全部网站'
+    const allTabIcon = allSiteFilter === 'visited' ? 'fa-fire' : 'fa-globe'
 
     tabContainer.innerHTML = `
         <button data-category="all" class="${isAllActive} px-4 py-2 whitespace-nowrap rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800">
-          全部 <span class="ml-1 px-1.5 text-xs ${allBadgeStyle} rounded-full">${allCount}</span>
+          <i class="fa-solid ${allTabIcon} mr-1"></i> ${allTabLabel} <span class="ml-1 px-1.5 text-xs ${allBadgeStyle} rounded-full">${allCount}</span>
         </button>
       `
 
@@ -317,6 +328,22 @@
         window.location.hash = '/' + tab.dataset.category
       })
     })
+
+    updateAllFilterButton()
+  }
+
+  // 新增：仅在“全部”Tab 中显示“所有网站 / 访问过的网站”切换按钮
+  function updateAllFilterButton() {
+    const isVisitedFilter = allSiteFilter === 'visited'
+    const button = elements.allFilterToggle
+    const icon = button.querySelector('i')
+
+    button.classList.toggle('hidden', currentCategory !== 'all')
+    button.classList.toggle('flex', currentCategory === 'all')
+    button.setAttribute('aria-pressed', isVisitedFilter ? 'true' : 'false')
+    icon.className = isVisitedFilter
+      ? 'fa-solid fa-fire theme-icon text-gray-500'
+      : 'fa-solid fa-globe theme-icon text-gray-500'
   }
 
   // 更新网站访问次数到 localStorage
@@ -326,13 +353,25 @@
     localStorage.setItem('site_visit_counts', JSON.stringify(visitCounts))
   }
 
+  // 新增：读取本地访问次数，用于“全部”Tab 的已访问过滤
+  function getVisitCounts() {
+    try {
+      return JSON.parse(localStorage.getItem('site_visit_counts')) || {}
+    } catch {
+      return {}
+    }
+  }
+
   // 渲染网站卡片 ✅ 修复排序问题
   function renderSites(categoryId) {
     const grid = elements.siteGrid
     grid.innerHTML = ''
     // 1. 过滤数据
+    const visitCounts = getVisitCounts()
     let filteredSites = categoryId === 'all'
-      ? siteData.sites
+      ? allSiteFilter === 'visited'
+        ? siteData.sites.filter(site => (visitCounts[site.id] || 0) > 0)
+        : siteData.sites
       : siteData.sites.filter(site => site.category === categoryId)
 
     if (filteredSites.length === 0) {
@@ -350,8 +389,6 @@
       categorySortMap[category.id] = index
     })
 
-    // 获取本地访问计数
-    const visitCounts = JSON.parse(localStorage.getItem('site_visit_counts')) || {}
     // 按访问次数逆序，次数相同按分类顺序
     filteredSites.sort((siteA, siteB) => {
       const countA = visitCounts[siteA.id] || 0
@@ -445,6 +482,22 @@
     renderCategories()
     // 渲染对应的网站数据
     renderSites(currentCategory)
+    // 更新“全部”Tab 专属过滤按钮的显示状态
+    updateAllFilterButton()
+  })
+
+  // 新增：切换“全部”Tab 的网站展示范围
+  elements.allFilterToggle.addEventListener('click', () => {
+    allSiteFilter = allSiteFilter === 'visited' ? 'all' : 'visited'
+    localStorage.setItem('site_all_filter', allSiteFilter)
+
+    // 更新按钮文案和“全部”标签数量
+    renderCategories()
+
+    // 该控制只作用于“全部”Tab
+    if (currentCategory === 'all') {
+      renderSites(currentCategory)
+    }
   })
 </script>
 </body>
